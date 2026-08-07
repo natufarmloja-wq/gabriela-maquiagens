@@ -113,6 +113,34 @@
             background: radial-gradient(circle at top right, var(--primary-light) 0%, transparent 60%);
         }
 
+        .hero-banner-wrapper {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .hero-banner-img {
+            width: 104%;
+            height: 104%;
+            margin-left: -2%;
+            margin-top: -2%;
+            display: block;
+            object-fit: cover;
+            transform: scale(1.03);
+        }
+
+        .hero-fade-overlay {
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, rgba(255, 214, 220, 0) 0%, var(--bg-primary) 100%);
+            pointer-events: none;
+        }
+
         .hero h1 {
             font-family: var(--font-serif);
             font-size: 42px;
@@ -652,6 +680,9 @@
                 padding: 8px 15px;
                 font-size: 13px;
             }
+            .hero-banner-wrapper {
+                height: 160px;
+            }
         }
     </style>
 </head>
@@ -675,18 +706,21 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="hero" style="padding: 120px 4% 30px; text-align: center; background: linear-gradient(180deg, var(--primary-light) 0%, var(--bg-primary) 100%);">
-        <div class="fade-in-up" style="max-width: 1100px; margin: 0 auto 30px; border-radius: var(--border-radius-lg); overflow: hidden; box-shadow: 0 15px 40px rgba(255, 94, 126, 0.15); border: 2px solid var(--border-color); background: white;">
-            <img src="logo_banner.jpg" alt="Gabriela Maquiagens & Roupas" style="width: 100%; display: block; object-fit: cover; aspect-ratio: 21/9; max-height: 420px;">
+    <section class="hero" style="margin-top: 80px; padding: 0 0 30px 0; text-align: center; background: var(--bg-primary);">
+        <div class="hero-banner-wrapper fade-in-up">
+            <img src="logo_banner.jpg" class="hero-banner-img" alt="Gabriela Maquiagens & Roupas">
+            <div class="hero-fade-overlay"></div>
         </div>
-        <p class="fade-in-up" style="font-size: 18px; color: var(--text-dark); max-width: 750px; margin: 0 auto 30px; font-weight: 500; line-height: 1.6;">
-            Catálogo interativo de peças selecionadas de moda e maquiagens exclusivas. <br>
-            Faça sua reserva e receba no conforto da sua casa ou retire na loja pelo WhatsApp: 
-            <a href="https://api.whatsapp.com/send?phone=554299840113" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 700; border-bottom: 2px dashed var(--accent);"> (42) 99840-0113</a>
-        </p>
-        <div class="search-box fade-in-up">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Pesquise por nome, descrição ou código..." oninput="filtrarProdutos()">
+        <div style="padding: 0 4%;">
+            <p class="fade-in-up" style="font-size: 16px; color: var(--text-dark); max-width: 750px; margin: 0 auto 20px; font-weight: 500; line-height: 1.6;">
+                Catálogo interativo de peças selecionadas de moda e maquiagens exclusivas. <br>
+                Faça sua reserva e receba no conforto da sua casa ou retire na loja pelo WhatsApp: 
+                <a href="https://api.whatsapp.com/send?phone=554299840113" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 700; border-bottom: 2px dashed var(--accent);"> (42) 99840-0113</a>
+            </p>
+            <div class="search-box fade-in-up">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Pesquise por nome, descrição ou código..." oninput="filtrarProdutos()">
+            </div>
         </div>
     </section>
 
