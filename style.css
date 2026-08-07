@@ -1,22 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;0,700;1,400&display=swap');
 
 :root {
-    --bg-primary: #FCF9F9;
+    --bg-primary: #FFF5F6; /* Um rosa off-white mais aconchegante e feminino */
     --bg-card: #FFFFFF;
-    --primary: #E29578;
-    --primary-light: #FFF0F2;
-    --primary-medium: #FFCCD5;
-    --accent: #FF85A1;
-    --gold: #C5A880;
-    --text-dark: #2B2D42;
-    --text-muted: #6C757D;
-    --border-color: #F0E6E6;
-    --success: #2EC4B6;
-    --danger: #E63946;
-    --shadow-soft: 0 10px 30px rgba(226, 149, 120, 0.08);
-    --shadow-medium: 0 15px 35px rgba(43, 45, 66, 0.06);
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.4);
+    --primary: #D48C70; /* Rosé Gold mais encorpado e chique */
+    --primary-light: #FFE3E7; /* Rosa claro vibrante de fundo */
+    --primary-medium: #FFA6B9; /* Rosa médio para transições de hover */
+    --accent: #FF5E7E; /* Rosa vibrante para badges de desconto e botões */
+    --gold: #B8976C; /* Dourado metálico mais visível */
+    --text-dark: #1E1F29; /* Contraste preto azulado escuro para textos */
+    --text-muted: #5C5E6E;
+    --border-color: #F7D6DB; /* Bordas levemente rosadas para harmonizar */
+    --success: #10B981;
+    --danger: #EF4444;
+    --shadow-soft: 0 10px 30px rgba(212, 140, 112, 0.12);
+    --shadow-medium: 0 15px 35px rgba(30, 31, 41, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.6);
     --border-radius-sm: 8px;
     --border-radius-md: 16px;
     --border-radius-lg: 24px;
@@ -59,9 +59,9 @@ body {
 /* Glassmorphism Classes */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 2px solid var(--border-color);
 }
 
 /* Botões */
@@ -71,7 +71,7 @@ body {
     justify-content: center;
     gap: 8px;
     font-family: var(--font-sans);
-    font-weight: 500;
+    font-weight: 600;
     font-size: 14px;
     letter-spacing: 0.5px;
     padding: 12px 24px;
@@ -85,7 +85,7 @@ body {
 .btn-primary {
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(226, 149, 120, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 94, 126, 0.3);
 }
 
 .btn-primary:hover {
