@@ -675,9 +675,11 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <h1 class="fade-in-up">Coleção & Beleza</h1>
-        <p class="fade-in-up">Catálogo interativo de peças selecionadas de moda e maquiagens exclusivas. Faça sua reserva e receba no conforto da sua casa.</p>
+    <section class="hero" style="padding-top: 20px;">
+        <div class="fade-in-up" style="max-width: 650px; margin: 0 auto 20px; border-radius: var(--border-radius-md); overflow: hidden; box-shadow: var(--shadow-medium); border: 1px solid var(--border-color);">
+            <img src="logo_banner.jpg" alt="Gabriela Maquiagens & Roupas" style="width: 100%; display: block;">
+        </div>
+        <p class="fade-in-up">Catálogo interativo de peças selecionadas de moda e maquiagens exclusivas. Faça sua reserva e receba no conforto da sua casa ou retire na loja pelo WhatsApp: **(42) 99840-0113**</p>
         <div class="search-box fade-in-up">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="searchInput" placeholder="Pesquise por nome, descrição ou código..." oninput="filtrarProdutos()">
@@ -770,8 +772,8 @@
         let produtoTamanhoPendente = null;
         let tamanhoSelecionado = null;
 
-        // Telefone padrão da loja
-        const WHATSAPP_LOJA = "5511999999999"; 
+        // Telefone real da loja presente na placa (DDD 42)
+        const WHATSAPP_LOJA = "554299840113"; 
 
         document.addEventListener("DOMContentLoaded", () => {
             carregarProdutos();
