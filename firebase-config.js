@@ -24,7 +24,12 @@ try {
         // Inicialização com Firebase SDK V9/V10 compat (UMD)
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();
-        auth = firebase.auth();
+        
+        // Inicializa o Auth apenas se o script do Firebase Auth estiver carregado na página (ex: admin.html)
+        if (typeof firebase.auth === 'function') {
+            auth = firebase.auth();
+        }
+        
         isFirebaseActive = true;
         console.log("Firebase inicializado com sucesso!");
     } else {
