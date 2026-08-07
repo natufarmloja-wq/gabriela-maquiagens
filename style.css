@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;0,700;1,400&display=swap');
 
 :root {
-    --bg-primary: #FFF5F6; /* Um rosa off-white mais aconchegante e feminino */
+    --bg-primary: #FFE9EC; /* Tom de rosa suave mais visível para destacar os cards */
     --bg-card: #FFFFFF;
     --primary: #D48C70; /* Rosé Gold mais encorpado e chique */
     --primary-light: #FFE3E7; /* Rosa claro vibrante de fundo */

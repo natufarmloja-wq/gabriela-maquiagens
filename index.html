@@ -675,11 +675,15 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="hero" style="padding-top: 20px;">
-        <div class="fade-in-up" style="max-width: 650px; margin: 0 auto 20px; border-radius: var(--border-radius-md); overflow: hidden; box-shadow: var(--shadow-medium); border: 1px solid var(--border-color);">
-            <img src="logo_banner.jpg" alt="Gabriela Maquiagens & Roupas" style="width: 100%; display: block;">
+    <section class="hero" style="padding: 120px 4% 30px; text-align: center; background: linear-gradient(180deg, var(--primary-light) 0%, var(--bg-primary) 100%);">
+        <div class="fade-in-up" style="max-width: 1000px; margin: 0 auto 30px; border-radius: var(--border-radius-lg); overflow: hidden; box-shadow: 0 15px 40px rgba(255, 94, 126, 0.15); border: 2px solid var(--border-color); background: white;">
+            <img src="logo_banner.jpg" alt="Gabriela Maquiagens & Roupas" style="width: 100%; height: auto; display: block; object-fit: contain; max-height: 400px;">
         </div>
-        <p class="fade-in-up">Catálogo interativo de peças selecionadas de moda e maquiagens exclusivas. Faça sua reserva e receba no conforto da sua casa ou retire na loja pelo WhatsApp: **(42) 99840-0113**</p>
+        <p class="fade-in-up" style="font-size: 18px; color: var(--text-dark); max-width: 750px; margin: 0 auto 30px; font-weight: 500; line-height: 1.6;">
+            Catálogo interativo de peças selecionadas de moda e maquiagens exclusivas. <br>
+            Faça sua reserva e receba no conforto da sua casa ou retire na loja pelo WhatsApp: 
+            <a href="https://api.whatsapp.com/send?phone=554299840113" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 700; border-bottom: 2px dashed var(--accent);"> (42) 99840-0113</a>
+        </p>
         <div class="search-box fade-in-up">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="searchInput" placeholder="Pesquise por nome, descrição ou código..." oninput="filtrarProdutos()">
