@@ -184,3 +184,314 @@ body {
 .fade-in {
     animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* ==========================================
+   NOVA GALERIA DE IMAGENS E LIGHTBOX (PRODUCT CARDS)
+   ========================================== */
+
+/* 1. Container de imagem do card */
+.product-card-img-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background-color: #f9f9f9;
+    overflow: hidden;
+    display: block;
+}
+
+/* 2. Slider interno das imagens */
+.product-card-slider {
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.product-card-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+.product-card-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #ffffff;
+    padding: 8px;
+    pointer-events: none;
+}
+
+/* 3. Setas de navegação no card */
+.product-card-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dark);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-smooth);
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.product-card-arrow:hover {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.product-card-arrow-left {
+    left: 8px;
+}
+
+.product-card-arrow-right {
+    right: 8px;
+}
+
+/* Mostrar setas no hover do container (apenas em desktop) */
+@media (hover: hover) {
+    .product-card-img-container:hover .product-card-arrow {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+@media (max-width: 768px) {
+    .product-card-arrow {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* Dots indicadores no rodapé da imagem */
+.product-card-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 4px 8px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+}
+
+.product-card-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    opacity: 0.5;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.product-card-dot.active {
+    background-color: var(--primary);
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* 4. Lightbox em tela cheia com overlay escuro */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 10, 12, 0.95);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Botão de Fechar */
+.lightbox-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    z-index: 1010;
+    transition: var(--transition-smooth);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-close:hover {
+    transform: rotate(90deg);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--bg-primary);
+}
+
+/* Wrapper do slider do Lightbox */
+.lightbox-slider-wrapper {
+    position: relative;
+    width: 80%;
+    height: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.lightbox-slider {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.lightbox-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.lightbox-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* 5. Zoom no Lightbox */
+.lightbox-slide.zoomed img {
+    cursor: zoom-out;
+}
+
+.lightbox-slide:not(.zoomed) img {
+    cursor: zoom-in;
+}
+
+/* Setas Grandes no Lightbox */
+.lightbox-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    z-index: 1010;
+}
+
+.lightbox-arrow:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-arrow-left {
+    left: 24px;
+}
+
+.lightbox-arrow-right {
+    right: 24px;
+}
+
+/* Dots no Lightbox */
+.lightbox-dots {
+    position: absolute;
+    bottom: 24px;
+    display: flex;
+    gap: 8px;
+    z-index: 1010;
+}
+
+.lightbox-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.lightbox-dot.active {
+    background-color: var(--primary);
+    transform: scale(1.3);
+}
+
+/* Ajustes Responsivos para Lightbox */
+@media (max-width: 768px) {
+    .lightbox-slider-wrapper {
+        width: 100%;
+        height: 70%;
+    }
+    .lightbox-arrow {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+    .lightbox-arrow-left {
+        left: 12px;
+    }
+    .lightbox-arrow-right {
+        right: 12px;
+    }
+    .lightbox-close {
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+    }
+}
+

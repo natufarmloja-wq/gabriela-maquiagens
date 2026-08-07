@@ -388,22 +388,33 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Categoria</label>
-                        <select id="prodCategoria" required onchange="atualizarPreview()">
-                            <option value="maquiagem">Maquiagem</option>
-                            <option value="blusas">Blusas</option>
-                            <option value="calça feminina">Calça Feminina</option>
-                            <option value="pijama">Pijama</option>
-                            <option value="roupas infantis">Roupas Infantis</option>
-                            <option value="acessorios">Acessórios</option>
-                            <option value="presentes">Presentes</option>
-                        </select>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="prodCategoria" required onchange="atualizarPreview()">
+                        <option value="maquiagem">Maquiagem</option>
+                        <option value="blusas">Blusas</option>
+                        <option value="calça feminina">Calça Feminina</option>
+                        <option value="pijama">Pijama</option>
+                        <option value="roupas infantis">Roupas Infantis</option>
+                        <option value="acessorios">Acessórios</option>
+                        <option value="presentes">Presentes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="margin: 0; font-weight: 600; font-size: 15px; color: var(--text-dark); letter-spacing: 0.3px;">Imagens do Produto (URLs)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; height: auto;" onclick="adicionarCampoImagem('')">
+                                <i class="fa-solid fa-plus"></i> Adicionar
+                            </button>
+                            <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px; height: auto; background-color: #6c757d; color: white;" onclick="limparTodasImagens()">
+                                <i class="fa-solid fa-eraser"></i> Limpar Tudo
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Caminho/URL da Imagem</label>
-                        <input type="url" id="prodImg" placeholder="https://exemplo.com/foto.jpg" oninput="atualizarPreview()">
+                    <div id="imagensContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- inputs dinâmicos de imagens -->
                     </div>
                 </div>
 
@@ -626,11 +637,154 @@
             document.getElementById("loginScreen").style.display = "none";
         }
 
+        // Lógica Dinâmica de Gerenciamento de Múltiplas Imagens
+        let previewActiveIndex = 0;
+
+        function obterUrlsImagensForm() {
+            const inputs = document.querySelectorAll('.prod-img-url');
+            const urls = [];
+            inputs.forEach(input => {
+                const val = input.value.trim();
+                if (val) urls.push(val);
+            });
+            return urls;
+        }
+
+        function adicionarCampoImagem(url = '') {
+            const container = document.getElementById("imagensContainer");
+            const div = document.createElement("div");
+            div.className = "imagem-row";
+            div.style.cssText = "display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); position: relative;";
+            
+            div.innerHTML = `
+                <div class="imagem-preview-thumb" style="width: 45px; height: 55px; border-radius: 4px; border: 1px solid #ddd; background: #eee; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+                    <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; display: ${url ? 'block' : 'none'};">
+                    <i class="fa-regular fa-image" style="color: #aaa; font-size: 18px; display: ${url ? 'none' : 'block'};"></i>
+                </div>
+                <input type="url" class="prod-img-url" value="${url}" placeholder="https://exemplo.com/foto.jpg" style="flex-grow: 1; margin: 0; padding: 8px 12px;" oninput="atualizarThumbnail(this); atualizarPreview();">
+                <div style="display: flex; gap: 5px;">
+                    <button type="button" class="action-btn btn-move-up" style="padding: 4px; color: #495057;" onclick="moverImagem(this, -1)" title="Mover para cima"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button type="button" class="action-btn btn-move-down" style="padding: 4px; color: #495057;" onclick="moverImagem(this, 1)" title="Mover para baixo"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button type="button" class="action-btn btn-delete" style="padding: 4px; color: var(--danger);" onclick="removerImagemRow(this)" title="Remover"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+            atualizarBadgesCapa();
+            atualizarPreview();
+        }
+
+        function atualizarThumbnail(input) {
+            const parent = input.closest('.imagem-row');
+            const img = parent.querySelector('.imagem-preview-thumb img');
+            const icon = parent.querySelector('.imagem-preview-thumb i');
+            const val = input.value.trim();
+            if (val) {
+                img.src = val;
+                img.style.display = 'block';
+                icon.style.display = 'none';
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                icon.style.display = 'block';
+            }
+        }
+
+        function atualizarBadgesCapa() {
+            const rows = document.querySelectorAll('#imagensContainer .imagem-row');
+            rows.forEach((row, idx) => {
+                let badge = row.querySelector('.badge-capa');
+                if (idx === 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'badge-capa';
+                        badge.style.cssText = "font-size: 9px; font-weight: 700; background: var(--gold); color: white; padding: 2px 4px; border-radius: 3px; position: absolute; top: -5px; left: 5px; z-index: 5;";
+                        badge.textContent = "Capa";
+                        row.appendChild(badge);
+                    }
+                } else {
+                    if (badge) badge.remove();
+                }
+            });
+        }
+
+        function removerImagemRow(btn) {
+            if (confirm("Deseja remover esta imagem da lista?")) {
+                const row = btn.closest('.imagem-row');
+                row.remove();
+                atualizarBadgesCapa();
+                atualizarPreview();
+            }
+        }
+
+        function limparTodasImagens() {
+            if (confirm("Deseja limpar todos os campos de imagem?")) {
+                document.getElementById("imagensContainer").innerHTML = "";
+                adicionarCampoImagem('');
+                atualizarPreview();
+            }
+        }
+
+        function moverImagem(btn, direcao) {
+            const row = btn.closest('.imagem-row');
+            const container = document.getElementById("imagensContainer");
+            if (direcao === -1) {
+                const prev = row.previousElementSibling;
+                if (prev) {
+                    container.insertBefore(row, prev);
+                }
+            } else if (direcao === 1) {
+                const next = row.nextElementSibling;
+                if (next) {
+                    container.insertBefore(next, row);
+                }
+            }
+            atualizarBadgesCapa();
+            atualizarPreview();
+        }
+
+        function mudarImagemPreview(direcao) {
+            const imagens = obterUrlsImagensForm();
+            if (imagens.length <= 1) return;
+            
+            previewActiveIndex += direcao;
+            if (previewActiveIndex < 0) previewActiveIndex = imagens.length - 1;
+            if (previewActiveIndex >= imagens.length) previewActiveIndex = 0;
+            
+            atualizarSliderPreview();
+        }
+
+        function mudarImagemPreviewDireto(index) {
+            previewActiveIndex = index;
+            atualizarSliderPreview();
+        }
+
+        function atualizarSliderPreview() {
+            const slider = document.getElementById("slider-preview");
+            if (slider) {
+                slider.style.transform = `translateX(-${previewActiveIndex * 100}%)`;
+            }
+            const dotsContainer = document.getElementById("dots-preview");
+            if (dotsContainer) {
+                const dots = dotsContainer.querySelectorAll('.product-card-dot');
+                dots.forEach((dot, idx) => {
+                    if (idx === previewActiveIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+        }
+
         // Inicialização do Painel de Produtos
         function iniciarPainel() {
             obterProdutosDoBanco((produtos) => {
                 todosProdutos = produtos;
                 renderizarTabela();
+                const container = document.getElementById("imagensContainer");
+                if (container.children.length === 0) {
+                    adicionarCampoImagem('');
+                }
                 atualizarPreview();
             });
         }
@@ -653,8 +807,11 @@
                 const precoReal = p.precoPromocional && p.precoPromocional < p.precoOriginal ? p.precoPromocional : p.precoOriginal;
                 const tr = document.createElement("tr");
 
+                // Fallback para suportar imagem única ou array de imagens legados
+                const imgExibida = (p.imagens && p.imagens.length > 0) ? p.imagens[0] : (p.imagem || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600');
+
                 tr.innerHTML = `
-                    <td><img src="${p.imagem}" class="table-img" alt="${p.nome}"></td>
+                    <td><img src="${imgExibida}" class="table-img" alt="${p.nome}"></td>
                     <td><strong>#${p.sku || 'S/N'}</strong></td>
                     <td>${p.nome}</td>
                     <td style="text-transform: capitalize;">${p.categoria}</td>
@@ -692,11 +849,20 @@
             const originalVal = parseFloat(document.getElementById("prodPrecoOrig").value) || 0;
             const promoVal = parseFloat(document.getElementById("prodPrecoPromo").value) || 0;
             const categoria = document.getElementById("prodCategoria").value;
-            const img = document.getElementById("prodImg").value || "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600";
             const foraEstoque = document.getElementById("prodForaEstoque").checked;
             
             // SKU (se for edição mostra o atual, se for novo simula um temporário)
             const sku = document.getElementById("prodSku").value || "GAB-XXX";
+
+            // Coleta de imagens cadastradas
+            const imagens = obterUrlsImagensForm();
+            if (imagens.length === 0) {
+                imagens.push("https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600");
+            }
+
+            if (previewActiveIndex >= imagens.length) {
+                previewActiveIndex = 0;
+            }
 
             // Tamanhos
             const tamanhosMarcados = [];
@@ -717,25 +883,44 @@
             }
 
             container.innerHTML = `
-                <div class="product-card-preview">
-                    <div class="product-image-wrapper-preview">
-                        <img src="${img}" alt="${nome}">
-                        <div class="preview-badge-container">${badgesHtml}</div>
+                <div class="product-card" style="box-shadow: var(--shadow-medium); border-radius: var(--border-radius-md); overflow: hidden; border: 1px solid var(--border-color); background-color: white;">
+                    <div class="product-card-img-container" id="container-preview" style="touch-action: pan-y;">
+                        <div class="product-card-slider" id="slider-preview" style="transform: translateX(-${previewActiveIndex * 100}%); transition: transform 0.3s ease;">
+                            ${imagens.map((imgUrl, idx) => `
+                                <div class="product-card-slide">
+                                    <img src="${imgUrl}" alt="${nome}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${imagens.length > 1 ? `
+                            <button type="button" class="product-card-arrow product-card-arrow-left" onclick="mudarImagemPreview(-1)">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button type="button" class="product-card-arrow product-card-arrow-right" onclick="mudarImagemPreview(1)">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <div class="product-card-dots" id="dots-preview">
+                                ${imagens.map((_, idx) => `
+                                    <span class="product-card-dot ${idx === previewActiveIndex ? 'active' : ''}" onclick="mudarImagemPreviewDireto(${idx})"></span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="badge-container">${badgesHtml}</div>
                     </div>
-                    <div class="product-info-preview">
-                        <div class="product-sku-preview">Ref: #${sku}</div>
-                        <h3 class="product-title-preview">${nome}</h3>
-                        <p class="product-desc-preview">${desc}</p>
+                    <div class="product-info">
+                        <div class="product-sku">Ref: #${sku}</div>
+                        <h3 class="product-title">${nome}</h3>
+                        <p class="product-desc">${desc}</p>
                         
                         ${tamanhosMarcados.length > 0 ? `
-                            <div class="sizes-badges-preview">
-                                ${tamanhosMarcados.map(t => `<span class="size-badge-preview">${t}</span>`).join('')}
+                            <div class="sizes-badges-preview" style="display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap;">
+                                ${tamanhosMarcados.map(t => `<span class="size-badge-preview" style="font-size: 10px; font-weight: 700; background-color: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 4px;">${t}</span>`).join('')}
                             </div>
                         ` : ''}
 
                         <div class="product-price-row" style="margin-bottom: 15px;">
-                            ${temPromo ? `<span class="price-original-preview">R$ ${originalVal.toFixed(2)}</span>` : ''}
-                            <span class="price-current-preview">R$ ${precoExibir.toFixed(2)}</span>
+                            ${temPromo ? `<span class="price-original">R$ ${originalVal.toFixed(2)}</span>` : ''}
+                            <span class="price-current">R$ ${precoExibir.toFixed(2)}</span>
                         </div>
                         <button class="btn btn-primary" style="width: 100%;" disabled>
                             <i class="fa-solid fa-bag-shopping"></i> ${foraEstoque ? 'Esgotado' : 'Reservar'}
@@ -756,8 +941,10 @@
             const precoPromoInput = document.getElementById("prodPrecoPromo").value;
             const precoPromocional = precoPromoInput ? parseFloat(precoPromoInput) : null;
             const categoria = document.getElementById("prodCategoria").value;
-            const imagem = document.getElementById("prodImg").value;
             const foraDeEstoque = document.getElementById("prodForaEstoque").checked;
+
+            // Coleta múltiplas imagens do formulário
+            const imagens = obterUrlsImagensForm();
 
             // Coleta tamanhos
             const tamanhos = [];
@@ -768,7 +955,6 @@
             // Gerar SKU automaticamente se for um novo produto
             let sku = document.getElementById("prodSku").value;
             if (!id || !sku) {
-                // SKU Sequencial simples
                 const count = todosProdutos.length + 1;
                 sku = `GAB-${String(count).padStart(3, '0')}`;
             }
@@ -781,7 +967,8 @@
                 precoOriginal,
                 precoPromocional,
                 categoria,
-                imagem,
+                imagem: imagens[0] || "", // Compatibilidade de imagem única para consumo legado
+                imagens,
                 tamanhos,
                 foraDeEstoque
             };
@@ -809,14 +996,31 @@
             document.getElementById("prodPrecoOrig").value = p.precoOriginal;
             document.getElementById("prodPrecoPromo").value = p.precoPromocional || "";
             document.getElementById("prodCategoria").value = p.categoria;
-            document.getElementById("prodImg").value = p.imagem;
             document.getElementById("prodForaEstoque").checked = p.foraDeEstoque || false;
+
+            // Carrega imagens no container
+            const container = document.getElementById("imagensContainer");
+            container.innerHTML = "";
+
+            let imgs = [];
+            if (p.imagens && Array.isArray(p.imagens) && p.imagens.length > 0) {
+                imgs = p.imagens;
+            } else if (p.imagem) {
+                imgs = [p.imagem];
+            }
+
+            if (imgs.length > 0) {
+                imgs.forEach(url => adicionarCampoImagem(url));
+            } else {
+                adicionarCampoImagem('');
+            }
 
             // Desmarca todos os tamanhos e marca os salvos
             document.querySelectorAll('input[name="tamanho"]').forEach(cb => {
                 cb.checked = p.tamanhos && p.tamanhos.includes(cb.value);
             });
 
+            previewActiveIndex = 0;
             atualizarPreview();
             window.scrollTo(0, 0); // Rola para o topo para facilitar a edição
         }
@@ -839,7 +1043,10 @@
             document.getElementById("productForm").reset();
             document.getElementById("prodId").value = "";
             document.getElementById("prodSku").value = "";
+            document.getElementById("imagensContainer").innerHTML = "";
+            adicionarCampoImagem('');
             document.querySelectorAll('input[name="tamanho"]').forEach(cb => cb.checked = false);
+            previewActiveIndex = 0;
             atualizarPreview();
         }
     </script>

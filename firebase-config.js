@@ -49,7 +49,7 @@ const PRODUTOS_PADRAO = [
         precoOriginal: 39.90,
         precoPromocional: 29.90,
         categoria: "maquiagem",
-        imagem: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&auto=format&fit=crop&q=80",
+        imagens: ["https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&auto=format&fit=crop&q=80"],
         tamanhos: [],
         foraDeEstoque: false
     },
@@ -61,7 +61,7 @@ const PRODUTOS_PADRAO = [
         precoOriginal: 189.90,
         precoPromocional: null,
         categoria: "calça feminina",
-        imagem: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&auto=format&fit=crop&q=80",
+        imagens: ["https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&auto=format&fit=crop&q=80"],
         tamanhos: ["P", "M", "G"],
         foraDeEstoque: false
     },
@@ -73,7 +73,7 @@ const PRODUTOS_PADRAO = [
         precoOriginal: 89.90,
         precoPromocional: 69.90,
         categoria: "blusas",
-        imagem: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80",
+        imagens: ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80"],
         tamanhos: ["P", "M", "G", "GG"],
         foraDeEstoque: false
     },
@@ -85,11 +85,28 @@ const PRODUTOS_PADRAO = [
         precoOriginal: 149.90,
         precoPromocional: null,
         categoria: "pijama",
-        imagem: "https://images.unsplash.com/photo-1562572159-4ebcd318f4dd?w=600&auto=format&fit=crop&q=80",
+        imagens: ["https://images.unsplash.com/photo-1562572159-4ebcd318f4dd?w=600&auto=format&fit=crop&q=80"],
         tamanhos: ["M", "G"],
         foraDeEstoque: false
     }
 ];
+
+// Helper para normalizar produtos garantindo array de imagens e compatibilidade legada
+function normalizarProduto(p) {
+    if (!p) return p;
+    let imagens = p.imagens;
+    if (!imagens || !Array.isArray(imagens) || imagens.length === 0) {
+        imagens = p.imagem ? [p.imagem] : [];
+    }
+    if (imagens.length === 0) {
+        imagens = ["https://placehold.co/600x600/ffd1dc/333333?text=Gabriela+Maquiagens"];
+    }
+    const { imagem, ...resto } = p;
+    return {
+        ...resto,
+        imagens: imagens
+    };
+}
 
 // Funções Helpers para obter e salvar dados (Nuvem ou LocalStorage)
 function obterProdutosDoBanco(callback) {
@@ -97,8 +114,8 @@ function obterProdutosDoBanco(callback) {
         database.ref('produtos').on('value', (snapshot) => {
             const dados = snapshot.val();
             if (dados) {
-                // Converter objeto Firebase para array
-                const lista = Object.keys(dados).map(key => ({
+                // Converter objeto Firebase para array e normalizar
+                const lista = Object.keys(dados).map(key => normalizarProduto({
                     id: key,
                     ...dados[key]
                 }));
@@ -114,7 +131,7 @@ function obterProdutosDoBanco(callback) {
                         precoOriginal: p.precoOriginal,
                         precoPromocional: p.precoPromocional,
                         categoria: p.categoria,
-                        imagem: p.imagem,
+                        imagens: p.imagens,
                         tamanhos: p.tamanhos || [],
                         foraDeEstoque: p.foraDeEstoque || false
                     });
@@ -136,7 +153,8 @@ function obterProdutosDoLocalStorage(callback) {
         localStorage.setItem('gabriela_produtos', JSON.stringify(PRODUTOS_PADRAO));
         locais = JSON.stringify(PRODUTOS_PADRAO);
     }
-    callback(JSON.parse(locais));
+    const produtos = JSON.parse(locais).map(normalizarProduto);
+    callback(produtos);
 }
 
 function salvarProdutoNoBanco(produto, callback) {
@@ -147,7 +165,7 @@ function salvarProdutoNoBanco(produto, callback) {
         precoOriginal: parseFloat(produto.precoOriginal),
         precoPromocional: produto.precoPromocional ? parseFloat(produto.precoPromocional) : null,
         categoria: produto.categoria,
-        imagem: produto.imagem || "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600",
+        imagens: produto.imagens || (produto.imagem ? [produto.imagem] : []),
         tamanhos: produto.tamanhos || [],
         foraDeEstoque: produto.foraDeEstoque || false
     };

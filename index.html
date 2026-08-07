@@ -805,6 +805,21 @@
         </div>
     </div>
 
+    <!-- Lightbox Modal -->
+    <div id="lightboxModal" class="lightbox" onclick="fecharLightboxExterno(event)">
+        <button class="lightbox-close" onclick="fecharLightbox()"><i class="fa-solid fa-xmark"></i></button>
+        <button class="lightbox-arrow lightbox-arrow-left" onclick="mudarImagemLightbox(event, -1)"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="lightbox-arrow lightbox-arrow-right" onclick="mudarImagemLightbox(event, 1)"><i class="fa-solid fa-chevron-right"></i></button>
+        <div class="lightbox-slider-wrapper">
+            <div class="lightbox-slider" id="lightboxSlider">
+                <!-- Inserido dinamicamente -->
+            </div>
+        </div>
+        <div class="lightbox-dots" id="lightboxDots">
+            <!-- Inserido dinamicamente -->
+        </div>
+    </div>
+
     <script>
         let produtosList = [];
         let carrinho = [];
@@ -812,6 +827,16 @@
         let termoPesquisa = '';
         let produtoTamanhoPendente = null;
         let tamanhoSelecionado = null;
+        let cardIndices = {};
+
+        // Estado do Lightbox
+        let lightboxProdutoId = null;
+        let lightboxActiveIndex = 0;
+        let scale = 1;
+        let translateX = 0, translateY = 0;
+        let isDragging = false;
+        let touchStartDist = 0;
+        let initialScale = 1;
 
         // Telefone real da loja presente na placa (DDD 42)
         const WHATSAPP_LOJA = "554299840113"; 
@@ -866,9 +891,33 @@
                     badgesHtml += `<span class="badge-stock">Fora de Estoque</span>`;
                 }
 
+                // Inicializar índice ativo do card do produto
+                if (!(p.id in cardIndices)) {
+                    cardIndices[p.id] = 0;
+                }
+
                 card.innerHTML = `
-                    <div class="product-image-wrapper">
-                        <img src="${p.imagem}" alt="${p.nome}" loading="lazy">
+                    <div class="product-card-img-container" id="container-${p.id}">
+                        <div class="product-card-slider" id="slider-${p.id}">
+                            ${p.imagens.map((imgUrl, idx) => `
+                                <div class="product-card-slide" onclick="abrirLightbox('${p.id}', ${idx})">
+                                    <img src="${imgUrl}" alt="${p.nome}" loading="lazy">
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${p.imagens.length > 1 ? `
+                            <button class="product-card-arrow product-card-arrow-left" onclick="mudarImagemCard(event, '${p.id}', -1)">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="product-card-arrow product-card-arrow-right" onclick="mudarImagemCard(event, '${p.id}', 1)">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <div class="product-card-dots" id="dots-${p.id}">
+                                ${p.imagens.map((_, idx) => `
+                                    <span class="product-card-dot ${idx === 0 ? 'active' : ''}" onclick="mudarImagemCardDireto(event, '${p.id}', ${idx})"></span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                         <div class="badge-container">${badgesHtml}</div>
                     </div>
                     <div class="product-info">
@@ -886,8 +935,343 @@
                         </div>
                     </div>
                 `;
+
+                // Inicializar swipe no mobile para o container do card
+                if (p.imagens && p.imagens.length > 1) {
+                    const imgContainer = card.querySelector('.product-card-img-container');
+                    inicializarSwipeCard(imgContainer, p.id);
+                }
+
                 grid.appendChild(card);
             });
+        }
+
+        function inicializarSwipeCard(container, prodId) {
+            let sX = 0;
+            let cX = 0;
+            let isMoving = false;
+
+            container.addEventListener('touchstart', (e) => {
+                sX = e.touches[0].clientX;
+                cX = sX;
+                isMoving = true;
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isMoving) return;
+                cX = e.touches[0].clientX;
+            }, { passive: true });
+
+            container.addEventListener('touchend', () => {
+                if (!isMoving) return;
+                isMoving = false;
+                const diffX = sX - cX;
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        mudarImagemCard(null, prodId, 1);
+                    } else {
+                        mudarImagemCard(null, prodId, -1);
+                    }
+                }
+            });
+        }
+
+        function mudarImagemCard(event, prodId, direcao) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            const produto = produtosList.find(p => p.id === prodId);
+            if (!produto || !produto.imagens || produto.imagens.length <= 1) return;
+
+            let novoIndex = (cardIndices[prodId] || 0) + direcao;
+            if (novoIndex < 0) novoIndex = produto.imagens.length - 1;
+            if (novoIndex >= produto.imagens.length) novoIndex = 0;
+
+            cardIndices[prodId] = novoIndex;
+            atualizarSliderCard(prodId);
+        }
+
+        function mudarImagemCardDireto(event, prodId, index) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            cardIndices[prodId] = index;
+            atualizarSliderCard(prodId);
+        }
+
+        function atualizarSliderCard(prodId) {
+            const idx = cardIndices[prodId] || 0;
+            const slider = document.getElementById(`slider-${prodId}`);
+            if (slider) {
+                slider.style.transform = `translateX(-${idx * 100}%)`;
+            }
+
+            const dotsContainer = document.getElementById(`dots-${prodId}`);
+            if (dotsContainer) {
+                const dots = dotsContainer.querySelectorAll('.product-card-dot');
+                dots.forEach((dot, dIdx) => {
+                    if (dIdx === idx) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // --- LÓGICA DO LIGHTBOX ---
+        function abrirLightbox(prodId, index = 0) {
+            lightboxProdutoId = prodId;
+            lightboxActiveIndex = index;
+            resetZoom();
+
+            const produto = produtosList.find(p => p.id === prodId);
+            if (!produto || !produto.imagens || produto.imagens.length === 0) return;
+
+            const slider = document.getElementById("lightboxSlider");
+            const dotsContainer = document.getElementById("lightboxDots");
+            slider.innerHTML = "";
+            dotsContainer.innerHTML = "";
+
+            produto.imagens.forEach((imgUrl, idx) => {
+                const slide = document.createElement("div");
+                slide.className = "lightbox-slide";
+
+                const img = document.createElement("img");
+                img.src = imgUrl;
+                img.alt = produto.nome;
+                img.draggable = false;
+
+                img.addEventListener("dblclick", (e) => {
+                    toggleDoubleTapZoom(e, img);
+                });
+
+                configurarEventosImagemLightbox(img);
+
+                slide.appendChild(img);
+                slider.appendChild(slide);
+
+                if (produto.imagens.length > 1) {
+                    const dot = document.createElement("span");
+                    dot.className = `lightbox-dot ${idx === index ? 'active' : ''}`;
+                    dot.onclick = (e) => {
+                        e.stopPropagation();
+                        irParaImagemLightbox(idx);
+                    };
+                    dotsContainer.appendChild(dot);
+                }
+            });
+
+            configurarSwipeLightbox(slider);
+
+            const modal = document.getElementById("lightboxModal");
+            modal.classList.add("active");
+            document.body.style.overflow = "hidden"; // impede scroll
+
+            irParaImagemLightbox(index);
+        }
+
+        function fecharLightbox() {
+            const modal = document.getElementById("lightboxModal");
+            if (modal) {
+                modal.classList.remove("active");
+            }
+            document.body.style.overflow = ""; // restaura scroll
+            resetZoom();
+        }
+
+        function fecharLightboxExterno(event) {
+            if (event.target.id === "lightboxModal" || event.target.classList.contains("lightbox-slider-wrapper") || event.target.classList.contains("lightbox-slide")) {
+                fecharLightbox();
+            }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                fecharLightbox();
+            }
+        });
+
+        function mudarImagemLightbox(event, direcao) {
+            if (event) event.stopPropagation();
+            const produto = produtosList.find(p => p.id === lightboxProdutoId);
+            if (!produto || !produto.imagens || produto.imagens.length <= 1) return;
+
+            let novoIndex = lightboxActiveIndex + direcao;
+            if (novoIndex < 0) novoIndex = produto.imagens.length - 1;
+            if (novoIndex >= produto.imagens.length) novoIndex = 0;
+
+            irParaImagemLightbox(novoIndex);
+        }
+
+        function irParaImagemLightbox(index) {
+            lightboxActiveIndex = index;
+            resetZoom();
+
+            const slider = document.getElementById("lightboxSlider");
+            if (slider) {
+                slider.style.transform = `translateX(-${index * 100}%)`;
+            }
+
+            const dots = document.querySelectorAll("#lightboxDots .lightbox-dot");
+            dots.forEach((dot, idx) => {
+                if (idx === index) {
+                    dot.classList.add("active");
+                } else {
+                    dot.classList.remove("active");
+                }
+            });
+        }
+
+        function configurarSwipeLightbox(slider) {
+            let sX = 0;
+            let cX = 0;
+            let isMoving = false;
+
+            slider.addEventListener("touchstart", (e) => {
+                if (scale > 1) return; 
+                if (e.touches.length > 1) return; 
+                sX = e.touches[0].clientX;
+                cX = sX;
+                isMoving = true;
+            }, { passive: true });
+
+            slider.addEventListener("touchmove", (e) => {
+                if (!isMoving || scale > 1) return;
+                cX = e.touches[0].clientX;
+            }, { passive: true });
+
+            slider.addEventListener("touchend", () => {
+                if (!isMoving || scale > 1) return;
+                isMoving = false;
+                const diffX = sX - cX;
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        mudarImagemLightbox(null, 1);
+                    } else {
+                        mudarImagemLightbox(null, -1);
+                    }
+                }
+            });
+        }
+
+        function resetZoom() {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            aplicarTransformImagemAtiva();
+        }
+
+        function aplicarTransformImagemAtiva() {
+            const slides = document.querySelectorAll("#lightboxSlider .lightbox-slide");
+            const slideAtivo = slides[lightboxActiveIndex];
+            if (slideAtivo) {
+                const img = slideAtivo.querySelector("img");
+                if (img) {
+                    img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                    if (scale > 1) {
+                        slideAtivo.classList.add("zoomed");
+                    } else {
+                        slideAtivo.classList.remove("zoomed");
+                    }
+                }
+            }
+        }
+
+        function toggleDoubleTapZoom(e, img) {
+            if (scale > 1) {
+                resetZoom();
+            } else {
+                scale = 2.5;
+                const rect = img.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                translateX = (rect.width / 2 - clickX) * 1.5;
+                translateY = (rect.height / 2 - clickY) * 1.5;
+                aplicarTransformImagemAtiva();
+            }
+        }
+
+        function configurarEventosImagemLightbox(img) {
+            let lastTouchX = 0;
+            let lastTouchY = 0;
+
+            const dragStart = (e) => {
+                if (scale <= 1) return;
+                isDragging = true;
+                if (e.type === "touchstart") {
+                    if (e.touches.length === 1) {
+                        lastTouchX = e.touches[0].clientX;
+                        lastTouchY = e.touches[0].clientY;
+                    }
+                } else {
+                    lastTouchX = e.clientX;
+                    lastTouchY = e.clientY;
+                }
+            };
+
+            const dragMove = (e) => {
+                if (!isDragging || scale <= 1) return;
+                let clientX = 0, clientY = 0;
+
+                if (e.type === "touchmove") {
+                    if (e.touches.length === 1) {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    } else {
+                        return;
+                    }
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+
+                const deltaX = clientX - lastTouchX;
+                const deltaY = clientY - lastTouchY;
+                translateX += deltaX;
+                translateY += deltaY;
+                lastTouchX = clientX;
+                lastTouchY = clientY;
+
+                aplicarTransformImagemAtiva();
+            };
+
+            const dragEnd = () => {
+                isDragging = false;
+            };
+
+            img.addEventListener("mousedown", dragStart);
+            window.addEventListener("mousemove", dragMove);
+            window.addEventListener("mouseup", dragEnd);
+
+            img.addEventListener("touchstart", (e) => {
+                if (e.touches.length === 2) {
+                    touchStartDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    initialScale = scale;
+                } else {
+                    dragStart(e);
+                }
+            }, { passive: true });
+
+            img.addEventListener("touchmove", (e) => {
+                if (e.touches.length === 2) {
+                    const dist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    scale = Math.min(Math.max(initialScale * (dist / touchStartDist), 1), 4);
+                    aplicarTransformImagemAtiva();
+                } else {
+                    dragMove(e);
+                }
+            }, { passive: true });
+
+            img.addEventListener("touchend", dragEnd);
         }
 
         function filtrarCategoria(cat, elemento) {
@@ -901,6 +1285,7 @@
             termoPesquisa = document.getElementById("searchInput").value;
             renderizarProdutos();
         }
+
 
         // Fluxo de Carrinho e Tamanhos
         function adicionarAoCarrinhoFluxo(id) {
@@ -966,7 +1351,7 @@
                     id: produto.id,
                     sku: produto.sku,
                     nome: produto.nome,
-                    imagem: produto.imagem,
+                    imagem: (produto.imagens && produto.imagens.length > 0) ? produto.imagens[0] : "https://placehold.co/600x600/ffd1dc/333333?text=Sem+Imagem",
                     tamanho: tamanho,
                     preco: preco,
                     qtd: 1
