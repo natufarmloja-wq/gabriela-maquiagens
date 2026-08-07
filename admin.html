@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo | Gabriela Maquiagens</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <style>
+        /* Estilos do Painel Admin */
+        .admin-header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4%;
+            box-shadow: var(--shadow-soft);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        @media (max-width: 992px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Form */
+        .admin-card {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+        }
+
+        .admin-card h2 {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+        }
+
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition-smooth);
+            background-color: var(--bg-primary);
+        }
+
+        .form-group input:focus, 
+        .form-group textarea:focus, 
+        .form-group select:focus {
+            border-color: var(--primary);
+            background-color: white;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Tag Selector */
+        .size-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .size-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 45px;
+            height: 38px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            background-color: var(--bg-primary);
+        }
+
+        .size-checkbox-label input {
+            display: none;
+        }
+
+        .size-checkbox-label:has(input:checked) {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Login Screen Overlay */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-primary);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            padding: 40px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .login-card .logo-placeholder {
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+            margin: 0 auto 20px;
+        }
+
+        /* Preview Area */
+        .preview-area {
+            position: sticky;
+            top: 120px;
+        }
+
+        /* List Layout */
+        .product-list-container {
+            grid-column: 1 / -1;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+            margin-bottom: 60px;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .admin-table th, .admin-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .admin-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            background-color: var(--bg-primary);
+        }
+
+        .admin-table tr:hover {
+            background-color: #FCF9F9;
+        }
+
+        .table-img {
+            width: 50px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .status-instock {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .status-out {
+            background-color: #F8D7DA;
+            color: #721C24;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            border-radius: 6px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-edit {
+            color: var(--primary);
+        }
+
+        .btn-edit:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn-delete {
+            color: var(--danger);
+        }
+
+        .btn-delete:hover {
+            background-color: #FEE2E2;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tela de Login Administrativo -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="logo-placeholder" style="background: linear-gradient(135deg, var(--primary) 0%, var(--gold) 100%); color: white; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 700; border-radius: 50%;">G</div>
+            <h2 style="font-family: var(--font-serif); font-size: 26px; margin-bottom: 8px;">Área Restrita</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px;">Por favor, identifique-se para gerenciar o catálogo.</p>
+            <form id="loginForm" onsubmit="realizarLogin(event)">
+                <div class="form-group" style="text-align: left;">
+                    <label>E-mail</label>
+                    <input type="email" id="loginEmail" placeholder="admin@gabriela.com" required>
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 25px;">
+                    <label>Senha</label>
+                    <input type="password" id="loginPassword" placeholder="Sua senha secreta" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Acessar Painel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header do Admin -->
+    <header class="admin-header">
+        <div class="logo-area">
+            <div class="logo-placeholder" style="background: linear-gradient(135deg, var(--primary) 0%, var(--gold) 100%); color: white; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 700; border-radius: 50%;">G</div>
+            <div class="logo-title" style="font-family: var(--font-serif); font-size: 24px; font-weight: 700;">Painel de Controle</div>
+        </div>
+        <div>
+            <a href="index.html" class="btn btn-secondary" style="margin-right: 10px;"><i class="fa-solid fa-arrow-left"></i> Ver Loja</a>
+            <button class="btn btn-outline" onclick="realizarLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Coluna 1: Formulário -->
+        <div class="admin-card">
+            <h2 id="formTitle">Novo Produto</h2>
+            <form id="productForm" onsubmit="salvarProduto(event)">
+                <input type="hidden" id="prodId">
+                <input type="hidden" id="prodSku">
+
+                <div class="form-group">
+                    <label>Nome do Produto</label>
+                    <input type="text" id="prodNome" placeholder="Ex: Batom Líquido Matte" required oninput="atualizarPreview()">
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição Curta</label>
+                    <textarea id="prodDesc" rows="3" placeholder="Insira detalhes sobre o tecido, fixação, etc." required oninput="atualizarPreview()"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Preço Original (R$)</label>
+                        <input type="number" step="0.01" id="prodPrecoOrig" placeholder="89.90" required oninput="atualizarPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Preço de Promoção (R$ - Opcional)</label>
+                        <input type="number" step="0.01" id="prodPrecoPromo" placeholder="69.90" oninput="atualizarPreview()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="prodCategoria" required onchange="atualizarPreview()">
+                            <option value="maquiagem">Maquiagem</option>
+                            <option value="blusas">Blusas</option>
+                            <option value="calça feminina">Calça Feminina</option>
+                            <option value="pijama">Pijama</option>
+                            <option value="roupas infantis">Roupas Infantis</option>
+                            <option value="acessorios">Acessórios</option>
+                            <option value="presentes">Presentes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Caminho/URL da Imagem</label>
+                        <input type="url" id="prodImg" placeholder="https://exemplo.com/foto.jpg" oninput="atualizarPreview()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tamanhos Disponíveis (Se aplicável)</label>
+                    <div class="size-checkboxes">
+                        <label class="size-checkbox-label">
+                            <input type="checkbox" name="tamanho" value="P" onchange="atualizarPreview()"> P
+                        </label>
+                        <label class="size-checkbox-label">
+                            <input type="checkbox" name="tamanho" value="M" onchange="atualizarPreview()"> M
+                        </label>
+                        <label class="size-checkbox-label">
+                            <input type="checkbox" name="tamanho" value="G" onchange="atualizarPreview()"> G
+                        </label>
+                        <label class="size-checkbox-label">
+                            <input type="checkbox" name="tamanho" value="GG" onchange="atualizarPreview()"> GG
+                        </label>
+                        <label class="size-checkbox-label">
+                            <input type="checkbox" name="tamanho" value="Único" onchange="atualizarPreview()"> Único
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="margin: 0; cursor: pointer;">
+                        <input type="checkbox" id="prodForaEstoque" onchange="atualizarPreview()"> Marcar como Fora de Estoque (Esgotado)
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" style="flex-grow: 1;">Salvar Produto</button>
+                    <button type="button" class="btn btn-secondary" onclick="limparFormulario()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Coluna 2: Preview do Card -->
+        <div class="preview-area">
+            <h3 style="font-family: var(--font-serif); margin-bottom: 20px; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-eye" style="color: var(--primary);"></i> Preview em Tempo Real
+            </h3>
+            <div id="previewCardContainer" style="max-width: 320px; margin: 0 auto;">
+                <!-- Carregado via JS dinâmico copiando os estilos do index.html -->
+            </div>
+        </div>
+
+        <!-- Lista Geral de Produtos -->
+        <div class="product-list-container">
+            <div class="list-header">
+                <h3 style="font-family: var(--font-serif); font-size: 22px;">Gerenciar Catálogo</h3>
+                <div style="position: relative; width: 300px;">
+                    <input type="text" id="listSearch" placeholder="Buscar por nome ou SKU..." oninput="filtrarTabela()" style="width: 100%; padding: 10px 15px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); font-family: var(--font-sans); outline: none;">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Imagem</th>
+                            <th>SKU</th>
+                            <th>Nome</th>
+                            <th>Categoria</th>
+                            <th>Preço</th>
+                            <th>Estoque</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <!-- Carregado via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copiamos os estilos do Card do index.html para o preview se renderizar com perfeição -->
+    <style>
+        .product-card-preview {
+            background-color: white;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .product-image-wrapper-preview {
+            position: relative;
+            width: 100%;
+            padding-top: 120px;
+            background-color: #F7F7F7;
+            overflow: hidden;
+        }
+        .product-card-preview img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-badge-container {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .product-info-preview {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-sku-preview {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .product-title-preview {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .product-desc-preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        .price-original-preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+        .price-current-preview {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .sizes-badges-preview {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .size-badge-preview {
+            font-size: 10px;
+            font-weight: 700;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+
+    <script>
+        let todosProdutos = [];
+        let termoPesquisaTabela = '';
+
+        // Carrega inicialização da tela de login administrativa local
+        const LOGIN_CORRETO = "gabriela@loja.com";
+        const SENHA_CORRETA = "gabriela123"; // Senha padrão simples que ela pode mudar
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Verifica se já está autenticado no LocalStorage
+            if (localStorage.getItem("gabriela_admin_authed") === "true") {
+                esconderLogin();
+                iniciarPainel();
+            }
+        });
+
+        // Autenticação Administrativa
+        function realizarLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById("loginEmail").value;
+            const senha = document.getElementById("loginPassword").value;
+
+            // Se o Firebase estiver ativo, podemos usar o login de e-mail e senha do Firebase.
+            if (isFirebaseActive) {
+                auth.signInWithEmailAndPassword(email, senha)
+                    .then((userCredential) => {
+                        localStorage.setItem("gabriela_admin_authed", "true");
+                        esconderLogin();
+                        iniciarPainel();
+                    })
+                    .catch((error) => {
+                        alert("Credenciais do Firebase inválidas ou incorretas.");
+                        console.error(error);
+                    });
+            } else {
+                // Fallback Local simples
+                if (email === LOGIN_CORRETO && senha === SENHA_CORRETA) {
+                    localStorage.setItem("gabriela_admin_authed", "true");
+                    esconderLogin();
+                    iniciarPainel();
+                } else {
+                    alert("Usuário ou Senha administrativa incorretos!");
+                }
+            }
+        }
+
+        function realizarLogout() {
+            localStorage.removeItem("gabriela_admin_authed");
+            if (isFirebaseActive) {
+                auth.signOut();
+            }
+            location.reload();
+        }
+
+        function esconderLogin() {
+            document.getElementById("loginScreen").style.display = "none";
+        }
+
+        // Inicialização do Painel de Produtos
+        function iniciarPainel() {
+            obterProdutosDoBanco((produtos) => {
+                todosProdutos = produtos;
+                renderizarTabela();
+                atualizarPreview();
+            });
+        }
+
+        function renderizarTabela() {
+            const tbody = document.getElementById("adminTableBody");
+            tbody.innerHTML = "";
+
+            const filtrados = todosProdutos.filter(p => {
+                return p.nome.toLowerCase().includes(termoPesquisaTabela.toLowerCase()) || 
+                       (p.sku && p.sku.toLowerCase().includes(termoPesquisaTabela.toLowerCase()));
+            });
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Nenhum produto cadastrado.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(p => {
+                const precoReal = p.precoPromocional && p.precoPromocional < p.precoOriginal ? p.precoPromocional : p.precoOriginal;
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td><img src="${p.imagem}" class="table-img" alt="${p.nome}"></td>
+                    <td><strong>#${p.sku || 'S/N'}</strong></td>
+                    <td>${p.nome}</td>
+                    <td style="text-transform: capitalize;">${p.categoria}</td>
+                    <td>
+                        ${p.precoPromocional ? `<span style="text-decoration: line-through; font-size: 11px; color: var(--text-muted);">R$ ${p.precoOriginal.toFixed(2)}</span><br>` : ''}
+                        <strong>R$ ${precoReal.toFixed(2)}</strong>
+                    </td>
+                    <td>
+                        <span class="status-badge ${p.foraDeEstoque ? 'status-out' : 'status-instock'}">
+                            ${p.foraDeEstoque ? 'Esgotado' : 'Disponível'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn btn-edit" onclick="prepararEdicao('${p.id}')" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="action-btn btn-delete" onclick="excluirProduto('${p.id}')" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarTabela() {
+            termoPesquisaTabela = document.getElementById("listSearch").value;
+            renderizarTabela();
+        }
+
+        // Preview em Tempo Real do Card do Catálogo
+        function atualizarPreview() {
+            const container = document.getElementById("previewCardContainer");
+            
+            const nome = document.getElementById("prodNome").value || "Batom Líquido Matte";
+            const desc = document.getElementById("prodDesc").value || "Descrição premium do produto que será visualizado pelo cliente da loja.";
+            const originalVal = parseFloat(document.getElementById("prodPrecoOrig").value) || 0;
+            const promoVal = parseFloat(document.getElementById("prodPrecoPromo").value) || 0;
+            const categoria = document.getElementById("prodCategoria").value;
+            const img = document.getElementById("prodImg").value || "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600";
+            const foraEstoque = document.getElementById("prodForaEstoque").checked;
+            
+            // SKU (se for edição mostra o atual, se for novo simula um temporário)
+            const sku = document.getElementById("prodSku").value || "GAB-XXX";
+
+            // Tamanhos
+            const tamanhosMarcados = [];
+            document.querySelectorAll('input[name="tamanho"]:checked').forEach(cb => {
+                tamanhosMarcados.push(cb.value);
+            });
+
+            const temPromo = promoVal > 0 && promoVal < originalVal;
+            const precoExibir = temPromo ? promoVal : originalVal;
+            const desconto = temPromo ? Math.round(((originalVal - promoVal) / originalVal) * 100) : 0;
+
+            let badgesHtml = "";
+            if (temPromo) {
+                badgesHtml += `<span class="badge-promo">-${desconto}% OFF</span>`;
+            }
+            if (foraEstoque) {
+                badgesHtml += `<span class="badge-stock" style="margin-left: 5px;">Esgotado</span>`;
+            }
+
+            container.innerHTML = `
+                <div class="product-card-preview">
+                    <div class="product-image-wrapper-preview">
+                        <img src="${img}" alt="${nome}">
+                        <div class="preview-badge-container">${badgesHtml}</div>
+                    </div>
+                    <div class="product-info-preview">
+                        <div class="product-sku-preview">Ref: #${sku}</div>
+                        <h3 class="product-title-preview">${nome}</h3>
+                        <p class="product-desc-preview">${desc}</p>
+                        
+                        ${tamanhosMarcados.length > 0 ? `
+                            <div class="sizes-badges-preview">
+                                ${tamanhosMarcados.map(t => `<span class="size-badge-preview">${t}</span>`).join('')}
+                            </div>
+                        ` : ''}
+
+                        <div class="product-price-row" style="margin-bottom: 15px;">
+                            ${temPromo ? `<span class="price-original-preview">R$ ${originalVal.toFixed(2)}</span>` : ''}
+                            <span class="price-current-preview">R$ ${precoExibir.toFixed(2)}</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" disabled>
+                            <i class="fa-solid fa-bag-shopping"></i> ${foraEstoque ? 'Esgotado' : 'Reservar'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Salvar e cadastrar produtos
+        function salvarProduto(event) {
+            event.preventDefault();
+
+            const id = document.getElementById("prodId").value;
+            const nome = document.getElementById("prodNome").value;
+            const descricao = document.getElementById("prodDesc").value;
+            const precoOriginal = parseFloat(document.getElementById("prodPrecoOrig").value);
+            const precoPromoInput = document.getElementById("prodPrecoPromo").value;
+            const precoPromocional = precoPromoInput ? parseFloat(precoPromoInput) : null;
+            const categoria = document.getElementById("prodCategoria").value;
+            const imagem = document.getElementById("prodImg").value;
+            const foraDeEstoque = document.getElementById("prodForaEstoque").checked;
+
+            // Coleta tamanhos
+            const tamanhos = [];
+            document.querySelectorAll('input[name="tamanho"]:checked').forEach(cb => {
+                tamanhos.push(cb.value);
+            });
+
+            // Gerar SKU automaticamente se for um novo produto
+            let sku = document.getElementById("prodSku").value;
+            if (!id || !sku) {
+                // SKU Sequencial simples
+                const count = todosProdutos.length + 1;
+                sku = `GAB-${String(count).padStart(3, '0')}`;
+            }
+
+            const produto = {
+                id: id || null,
+                sku: sku,
+                nome,
+                descricao,
+                precoOriginal,
+                precoPromocional,
+                categoria,
+                imagem,
+                tamanhos,
+                foraDeEstoque
+            };
+
+            salvarProdutoNoBanco(produto, (sucesso) => {
+                if (sucesso) {
+                    alert("Produto salvo com sucesso!");
+                    limparFormulario();
+                    iniciarPainel();
+                } else {
+                    alert("Ocorreu um erro ao salvar o produto.");
+                }
+            });
+        }
+
+        function prepararEdicao(id) {
+            const p = todosProdutos.find(prod => prod.id === id);
+            if (!p) return;
+
+            document.getElementById("formTitle").textContent = "Editar Produto Ref #" + p.sku;
+            document.getElementById("prodId").value = p.id;
+            document.getElementById("prodSku").value = p.sku;
+            document.getElementById("prodNome").value = p.nome;
+            document.getElementById("prodDesc").value = p.descricao;
+            document.getElementById("prodPrecoOrig").value = p.precoOriginal;
+            document.getElementById("prodPrecoPromo").value = p.precoPromocional || "";
+            document.getElementById("prodCategoria").value = p.categoria;
+            document.getElementById("prodImg").value = p.imagem;
+            document.getElementById("prodForaEstoque").checked = p.foraDeEstoque || false;
+
+            // Desmarca todos os tamanhos e marca os salvos
+            document.querySelectorAll('input[name="tamanho"]').forEach(cb => {
+                cb.checked = p.tamanhos && p.tamanhos.includes(cb.value);
+            });
+
+            atualizarPreview();
+            window.scrollTo(0, 0); // Rola para o topo para facilitar a edição
+        }
+
+        function excluirProduto(id) {
+            if (confirm("Tem certeza que deseja excluir permanentemente este produto do catálogo?")) {
+                excluirProdutoDoBanco(id, (sucesso) => {
+                    if (sucesso) {
+                        alert("Produto excluído!");
+                        iniciarPainel();
+                    } else {
+                        alert("Não foi possível excluir o produto.");
+                    }
+                });
+            }
+        }
+
+        function limparFormulario() {
+            document.getElementById("formTitle").textContent = "Novo Produto";
+            document.getElementById("productForm").reset();
+            document.getElementById("prodId").value = "";
+            document.getElementById("prodSku").value = "";
+            document.querySelectorAll('input[name="tamanho"]').forEach(cb => cb.checked = false);
+            atualizarPreview();
+        }
+    </script>
+</body>
+</html>
